@@ -1,0 +1,42 @@
+<?php
+
+namespace App\Providers;
+
+use Illuminate\Support\ServiceProvider;
+use App\Services\Contracts\AuthServiceInterface;
+use App\Services\AuthService;
+use App\Services\Contracts\AdminServiceInterface;
+use App\Services\AdminService;
+use App\Services\RiderService;
+use App\Services\Contracts\RiderServiceInterface;
+
+class AppServiceProvider extends ServiceProvider
+{
+    /**
+     * Register any application services.
+     */
+    public function register(): void
+    {
+        $this->app->bind(
+            AuthServiceInterface::class,
+            AuthService::class
+        );
+
+        $this->app->bind(
+            AdminServiceInterface::class,
+            AdminService::class
+        );
+        $this->app->bind(
+            RiderServiceInterface::class,
+            RiderService::class
+        );
+    }
+
+    /**
+     * Bootstrap any application services.
+     */
+    public function boot(): void
+    {
+        //
+    }
+}
