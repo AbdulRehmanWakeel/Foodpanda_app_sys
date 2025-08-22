@@ -17,59 +17,69 @@ class Handler extends ExceptionHandler
 
     protected $dontFlash = ['password'];
 
-    public function register(): void
+    /**
+     * Log every error into DB (only once).
+     */
+    public function report(Throwable $e): void
     {
-        $this->renderable(function (Throwable $e, $request) {
-            if ($request->expectsJson()) {
+        try {
+            ErrorLog::create([
+                'message'   => $e->getMessage(),
+                'exception' => get_class($e),
+                'trace'     => substr($e->getTraceAsString(), 0, 2000), // truncate for safety
+                'file'      => $e->getFile(),
+                'line'      => $e->getLine(),
+            ]);
+        } catch (\Throwable $logError) {
+            // Fail silently if DB logging fails
+        }
 
-                 
-                try {
-                    ErrorLog::create([
-                        'message' => $e->getMessage(),
-                        'trace'   => $e->getTraceAsString(),
-                        'file'    => $e->getFile(),
-                        'line'    => $e->getLine(),
-                    ]);
-                } catch (\Throwable $logError) {
-                    // avoid infinite loop if DB insert fails
-                }
+        parent::report($e);
+    }
 
-                 
-                if ($e instanceof ValidationException) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Validation failed',
-                        'errors'  => $e->errors(),
-                    ], 422);
-                }
-
-                if ($e instanceof AuthenticationException) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Unauthorized',
-                    ], 401);
-                }
-
-                if ($e instanceof ModelNotFoundException || $e instanceof NotFoundHttpException) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Resource not found',
-                    ], 404);
-                }
-
-                if ($e instanceof MethodNotAllowedHttpException) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Method not allowed',
-                    ], 405);
-                }
-
-                 
+    /**
+     * Always return clean JSON in API responses.
+     */
+    public function render($request, Throwable $e)
+    {
+        if ($request->expectsJson()) {
+            if ($e instanceof ValidationException) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Something went wrong, please try again later.',
-                ], 500);
+                    'message' => 'Validation failed',
+                    'errors'  => $e->errors(),
+                ], 422);
             }
-        });
+
+            if ($e instanceof AuthenticationException) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized',
+                ], 401);
+            }
+
+            if ($e instanceof ModelNotFoundException || $e instanceof NotFoundHttpException) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Resource not found',
+                ], 404);
+            }
+
+            if ($e instanceof MethodNotAllowedHttpException) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Method not allowed',
+                ], 405);
+            }
+
+            // Default: catch all others
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong, please try again later.',
+            ], 500);
+        }
+
+        // For web requests, use Laravel’s default handling
+        return parent::render($request, $e);
     }
 }
