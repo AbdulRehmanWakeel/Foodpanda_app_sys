@@ -1,17 +1,17 @@
 <?php
 
-
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\RestaurantController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\RiderController;
+use App\Http\Controllers\CustomerController;
 
- 
+// ================== Auth routes ==================
 Route::prefix('auth')->group(function () {
-    // Public routes
-    Route::post('/register', [AuthController::class, 'register']);
+    // Public routes (all roles)
+    Route::post('/register', [AuthController::class, 'register']); // dynamically assign role: customer, restaurant, rider
     Route::post('/login', [AuthController::class, 'login']);
 
     // Protected routes (JWT required)
@@ -21,7 +21,7 @@ Route::prefix('auth')->group(function () {
     });
 });
 
-// Admin-only routes
+// ================== Admin Panel ==================
 Route::prefix('admin')->middleware(['auth:api'])->group(function () {
     Route::get('/users', [AdminController::class, 'users']); 
     Route::get('/restaurants', [AdminController::class, 'restaurants']); 
@@ -30,9 +30,8 @@ Route::prefix('admin')->middleware(['auth:api'])->group(function () {
     Route::get('/analytics', [AdminController::class, 'analytics']); 
 });
 
-// Restaurant routes
+// ================== Restaurant Panel ==================
 Route::prefix('restaurant')->middleware(['auth:api'])->group(function () {
-
     Route::get('restaurants', [RestaurantController::class, 'index']);       
     Route::get('restaurants/{id}', [RestaurantController::class, 'show']);  
     Route::post('restaurants', [RestaurantController::class, 'store']); 
@@ -42,10 +41,9 @@ Route::prefix('restaurant')->middleware(['auth:api'])->group(function () {
     Route::post('/menu', [MenuController::class, 'store']);
     Route::patch('/menu/{id}', [MenuController::class, 'update']);
     Route::delete('/menu/{id}', [MenuController::class, 'destroy']); 
-
 });
-// Rider routes
 
+// ================== Rider Panel ==================
 Route::prefix('riders')->group(function () {
     Route::post('/register', [RiderController::class, 'register']);
     Route::post('/login', [RiderController::class, 'login']);
@@ -59,5 +57,17 @@ Route::prefix('riders')->middleware(['auth:api'])->group(function () {
     Route::get('/earnings', [RiderController::class, 'earnings']);
 });
 
+// ================== Customer Panel ==================
+Route::prefix('customer')->middleware(['auth:api'])->group(function () {
 
+     
+    Route::get('/restaurants', [CustomerController::class, 'restaurants']);
+    Route::get('/restaurants/{id}/menu', [CustomerController::class, 'menu']);
 
+     
+    Route::post('/orders', [CustomerController::class, 'placeOrder']);
+    Route::get('/orders/{id}', [CustomerController::class, 'trackOrder']);
+
+     
+    Route::post('/reviews', [CustomerController::class, 'review']);
+});

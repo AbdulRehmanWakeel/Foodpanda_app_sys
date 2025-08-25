@@ -9,6 +9,8 @@ use App\Services\Contracts\AdminServiceInterface;
 use App\Services\AdminService;
 use App\Services\RiderService;
 use App\Services\Contracts\RiderServiceInterface;
+use App\Services\Contracts\CustomerServiceInterface;
+use App\Services\CustomerService;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -29,6 +31,10 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             RiderServiceInterface::class,
             RiderService::class
+        );
+        $this->app->bind(
+            CustomerServiceInterface::class,
+            CustomerService::class
         );
     }
 

@@ -28,6 +28,11 @@ class Restaurant extends Model
     {
         return $this->hasMany(Order::class);
     }
+    public function reviews()
+    {
+        return $this->hasMany(Review::class);
+    }
+
 }
 
  

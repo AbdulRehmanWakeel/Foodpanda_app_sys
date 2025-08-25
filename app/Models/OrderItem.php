@@ -14,6 +14,11 @@ class OrderItem extends Model
         'menu_id',
         'quantity',
         'price',
+        'addons',
+    ];
+
+    protected $casts = [
+        'addons' => 'array',  
     ];
 
     public function order()
@@ -23,6 +28,6 @@ class OrderItem extends Model
 
     public function menu()
     {
-        return $this->belongsTo(Menu::class);
+        return $this->belongsTo(Menu::class, 'menu_id'); 
     }
 }
