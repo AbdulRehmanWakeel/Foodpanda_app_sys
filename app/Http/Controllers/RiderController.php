@@ -70,10 +70,17 @@ class RiderController extends Controller
     public function assignedOrders()
     {
         $rider = auth()->user();
+        if (!$rider) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized, no rider found'
+            ], 401);
+        }
         $orders = $this->riderService->assignedOrders($rider->id);
-
         return response()->json($orders);
     }
+
+
 
      
     public function updateOrderStatus(Request $request, $id)

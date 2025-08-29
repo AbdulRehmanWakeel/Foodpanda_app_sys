@@ -58,22 +58,20 @@ class RiderService implements RiderServiceInterface
     {
         $orders = Order::where('rider_id', $riderId)->get();
         if ($orders->isEmpty()) {
-            return collect([
-                [
-                    'id' => 0,
-                    'restaurant_id' => null,
-                    'user_id' => null,
-                    'rider_id' => $riderId,
-                    'total_price' => 0,
-                    'status' => 'no_orders',
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]
-            ]);
+            return [
+                'success' => true,
+                'message' => 'No orders assigned to this rider yet',
+                'rider_id' => $riderId,
+                'orders' => []
+            ];
         }
-        return $orders;
+        return [
+            'success' => true,
+            'message' => 'Orders fetched successfully',
+            'rider_id' => $riderId,
+            'orders' => $orders
+        ];
     }
-
 
     public function updateOrderStatus(int $orderId, string $status)
     {

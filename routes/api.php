@@ -51,17 +51,23 @@ Route::prefix('admin')->middleware(['auth:api','role:admin'])->group(function ()
 });
 // ================== Restaurant Panel ==================
 Route::prefix('restaurant')->middleware(['auth:api','role:restaurant'])->group(function () {
-    Route::get('restaurants', [RestaurantController::class, 'index']);       
-    Route::get('restaurants/{id}', [RestaurantController::class, 'show']);  
-    Route::post('restaurants', [RestaurantController::class, 'store']); 
-    Route::get('/orders', [RestaurantController::class, 'orders']);
-    Route::patch('/orders/{id}/status', [RestaurantController::class, 'updateOrderStatus']); 
+    Route::get('restaurants', [RestaurantController::class, 'index']);
+    Route::get('restaurants/{id}', [RestaurantController::class, 'show']);
+    Route::post('restaurants', [RestaurantController::class, 'store']);
+    Route::get('restaurants/{id}/stats', [RestaurantController::class, 'stats']);
 
+    // Orders
+    Route::get('/restaurant/orders', [RestaurantController::class, 'orders']);
+    Route::patch('/orders/{id}/status', [RestaurantController::class, 'updateOrderStatus']);
+
+    // Menu CRUD
+    Route::get('/menu/{restaurantId}', [MenuController::class, 'index']);
+    Route::get('/menu/item/{id}', [MenuController::class, 'show']);
     Route::post('/menu', [MenuController::class, 'store']);
     Route::patch('/menu/{id}', [MenuController::class, 'update']);
-    Route::delete('/menu/{id}', [MenuController::class, 'destroy']); 
-
+    Route::delete('/menu/{id}', [MenuController::class, 'destroy']);
 });
+
 
 // ================== Rider Panel ==================
 Route::prefix('riders')->group(function () {

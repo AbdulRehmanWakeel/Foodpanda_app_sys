@@ -4,7 +4,10 @@ namespace App\Services\Contracts;
 
 interface MenuServiceInterface
 {
-    public function createMenu(array $data): mixed;
-    public function updateMenu(int $id, array $data): mixed;
-    public function deleteMenu(int $id): bool;
+    public function getMenuItems(int $restaurantId, array $filters = [], int $perPage = 10);
+    public function getMenuItemById(int $id);
+    public function createMenuItem(array $data);
+    public function updateMenuItem(int $id, array $data);
+    public function deleteMenuItem(int $id);
 }
+

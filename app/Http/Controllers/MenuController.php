@@ -3,55 +3,75 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Services\Contracts\MenuServiceInterface;
 
 class MenuController extends Controller
 {
-    protected MenuServiceInterface $menuService;
+    protected $menuService;
 
     public function __construct(MenuServiceInterface $menuService)
     {
         $this->menuService = $menuService;
     }
 
+    // List menu items with filters
+    public function index(Request $request, $restaurantId)
+    {
+        $filters = $request->all();
+        $perPage = $request->input('per_page', 10);
+
+        $menuItems = $this->menuService->getMenuItems($restaurantId, $filters, $perPage);
+
+        return response()->json($menuItems);
+    }
+
+    // Show single menu item
+    public function show($id)
+    {
+        $menuItem = $this->menuService->getMenuItemById($id);
+        if (!$menuItem) {
+            return response()->json(['success' => false, 'message' => 'Menu item not found'], 404);
+        }
+        return response()->json($menuItem);
+    }
+
+    // Create menu item
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'restaurant_id' => 'required|exists:restaurants,id',
+        $request->validate([
+            'restaurant_id' => 'required|integer',
             'name' => 'required|string|max:255',
-            'price' => 'required|numeric|min:0',
             'description' => 'nullable|string',
-            'category' => 'nullable|string',
-            'image' => 'nullable|string'
+            'price' => 'required|numeric',
+            'category' => 'nullable|string|max:100',
+            'availability' => 'nullable|boolean'
         ]);
 
-        $menu = $this->menuService->createMenu($validated);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Menu item created successfully',
-            'data' => $menu
-        ], 201);
+        $menuItem = $this->menuService->createMenuItem($request->all());
+        return response()->json(['success' => true, 'data' => $menuItem], 201);
     }
 
-    public function update(Request $request, int $id)
+    // Update menu item
+    public function update(Request $request, $id)
     {
-        try {
-            $menu = $this->menuService->updateMenu($id, $request->all());
-            return response()->json(['success' => true, 'data' => $menu]);
-        } catch (ModelNotFoundException $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 404);
+        $menuItem = $this->menuService->updateMenuItem($id, $request->all());
+
+        if (!$menuItem) {
+            return response()->json(['success' => false, 'message' => 'Menu item not found'], 404);
         }
+
+        return response()->json(['success' => true, 'data' => $menuItem]);
     }
 
-    public function destroy(int $id)
+    // Delete menu item
+    public function destroy($id)
     {
-        try {
-            $this->menuService->deleteMenu($id);
-            return response()->json(['success' => true, 'message' => 'Menu deleted successfully']);
-        } catch (ModelNotFoundException $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 404);
+        $deleted = $this->menuService->deleteMenuItem($id);
+
+        if (!$deleted) {
+            return response()->json(['success' => false, 'message' => 'Menu item not found'], 404);
         }
+
+        return response()->json(['success' => true, 'message' => 'Menu item deleted successfully']);
     }
 }
