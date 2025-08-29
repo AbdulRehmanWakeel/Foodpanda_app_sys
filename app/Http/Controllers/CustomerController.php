@@ -14,61 +14,73 @@ class CustomerController extends Controller
         $this->customerService = $customerService;
     }
 
-    
+    // ----------------- Restaurants -----------------
     public function restaurants(Request $request)
     {
-        try {
-            $restaurants = $this->customerService->getRestaurants($request->all());
-            return response()->json(['success' => true, 'data' => $restaurants], 200);
-        } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
-        }
+        return response()->json(['success' => true, 'data' => $this->customerService->getRestaurants($request->all())]);
     }
 
-     
     public function menu($id)
     {
-        try {
-            $restaurantId = (int) $id;   
-            $menu = $this->customerService->getRestaurantMenu($restaurantId);
-            return response()->json(['success' => true, 'data' => $menu], 200);
-        } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 404);
-        }
+        return response()->json(['success' => true, 'data' => $this->customerService->getRestaurantMenu((int)$id)]);
     }
 
-
-     
+    // ----------------- Orders -----------------
     public function placeOrder(Request $request)
     {
-        try {
-            $order = $this->customerService->placeOrder($request->all());
-            return response()->json(['success' => true, 'data' => $order], 201);
-        } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
-        }
+        return response()->json(['success' => true, 'data' => $this->customerService->placeOrder($request->all())]);
     }
 
-     
     public function trackOrder($id)
     {
-        try {
-            $order = $this->customerService->trackOrder((int)$id);
-            return response()->json(['success' => true, 'data' => $order], 200);
-        } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 404);
-        }
+        return response()->json(['success' => true, 'data' => $this->customerService->trackOrder((int)$id)]);
     }
 
-     
+    // ----------------- Reviews -----------------
     public function review(Request $request)
     {
-        try {
-            $review = $this->customerService->submitReview($request->all());
-            return response()->json(['success' => true, 'data' => $review], 201);
-        } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
-        }
+        return response()->json(['success' => true, 'data' => $this->customerService->submitReview($request->all())]);
     }
 
+    public function updateReview(Request $request, $id)
+    {
+        return response()->json(['success' => true, 'data' => $this->customerService->updateReview((int)$id, $request->all())]);
+    }
+
+    public function deleteReview($id)
+    {
+        return response()->json(['success' => true, 'data' => $this->customerService->deleteReview((int)$id)]);
+    }
+
+    // ----------------- Profile -----------------
+    public function profile()
+    {
+        return response()->json(['success' => true, 'data' => $this->customerService->getProfile()]);
+    }
+
+    public function updateProfile(Request $request)
+    {
+        return response()->json(['success' => true, 'data' => $this->customerService->updateProfile($request->all())]);
+    }
+
+    // ----------------- Addresses -----------------
+    public function listAddresses()
+    {
+        return response()->json(['success' => true, 'data' => $this->customerService->listAddresses()]);
+    }
+
+    public function createAddress(Request $request)
+    {
+        return response()->json(['success' => true, 'data' => $this->customerService->createAddress($request->all())]);
+    }
+
+    public function updateAddress(Request $request, $id)
+    {
+        return response()->json(['success' => true, 'data' => $this->customerService->updateAddress((int)$id, $request->all())]);
+    }
+
+    public function deleteAddress($id)
+    {
+        return response()->json(['success' => true, 'data' => $this->customerService->deleteAddress((int)$id)]);
+    }
 }

@@ -20,9 +20,11 @@ class User extends Authenticatable implements JWTSubject
         'email',
         'phone',
         'password',
-        'is_online',       
-        'vehicle_type',   
-        'rider_license',   
+        'is_online',
+        'vehicle_type',
+        'rider_license',
+        'verification_status', // ✅ added
+        'verified_at',         // ✅ added
     ];
 
     /**
@@ -39,6 +41,7 @@ class User extends Authenticatable implements JWTSubject
     protected $casts = [
         'email_verified_at' => 'datetime',
         'is_online' => 'boolean',
+        'verified_at' => 'datetime', // ✅ added
     ];
 
     /**
@@ -55,7 +58,7 @@ class User extends Authenticatable implements JWTSubject
     public function getJWTCustomClaims()
     {
         return [
-            'role' => $this->getRoleNames(), 
+            'role' => $this->getRoleNames(),
         ];
     }
 
@@ -66,14 +69,24 @@ class User extends Authenticatable implements JWTSubject
     {
         return $this->hasMany(Order::class, 'rider_id');
     }
+
     public function addresses()
     {
         return $this->hasMany(Address::class);
     }
+
     public function reviews()
     {
         return $this->hasMany(Review::class);
     }
 
-
+    public static function getFilterMap(): array
+    {
+        return [
+            'status' => \App\Filters\Admin\UserStatusFilter::class,
+            'restaurant_approval' => \App\Filters\Admin\RestaurantApprovalFilter::class,
+            'rider_verification' => \App\Filters\Admin\RiderVerificationFilter::class,
+            'commission_range' => \App\Filters\Admin\CommissionRangeFilter::class,
+        ];
+    }
 }

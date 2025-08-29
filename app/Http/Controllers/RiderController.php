@@ -91,7 +91,7 @@ class RiderController extends Controller
     {
         $rider = auth()->user();
         $earnings = $this->riderService->earnings($rider->id);
-
         return response()->json(['earnings' => $earnings]);
     }
+
 }

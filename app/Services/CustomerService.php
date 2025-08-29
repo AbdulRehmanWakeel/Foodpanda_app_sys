@@ -7,107 +7,119 @@ use App\Models\Restaurant;
 use App\Models\Menu;
 use App\Models\Order;
 use App\Models\Review;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
+use App\Helpers\FilterPipeline;
+use Illuminate\Support\Facades\Hash;
 
 class CustomerService implements CustomerServiceInterface
 {
+    // ----------------- Restaurants & Menus -----------------
     public function getRestaurants(array $filters)
     {
-        try {
-            $query = Restaurant::query();
-
-            if (!empty($filters['location'])) {
-                $query->where('location', 'like', '%'.$filters['location'].'%');
-            }
-
-            if (!empty($filters['cuisine'])) {
-                $query->where('cuisine_type', $filters['cuisine']);
-            }
-
-            return $query->with('menus')->paginate(10);
-        } catch (\Exception $e) {
-            throw new \Exception("Failed to fetch restaurants: " . $e->getMessage());
-        }
+        $query = Restaurant::query();
+        return FilterPipeline::apply($query, $filters, Restaurant::getFilterMap())
+            ->with('menus')
+            ->paginate(10);
     }
 
-    /**
-     * Get restaurant menu by restaurant ID.
-     */
     public function getRestaurantMenu(int $restaurantId)
     {
-        try {
-            return Restaurant::with('menus')->findOrFail($restaurantId);
-        } catch (ModelNotFoundException $e) {
-            throw new \Exception("Restaurant not found.");
-        } catch (\Exception $e) {
-            throw new \Exception("Failed to fetch menu: " . $e->getMessage());
-        }
+        return Restaurant::with('menus')->findOrFail($restaurantId);
     }
 
-    /**
-     * Place a new order.
-     */
+    // ----------------- Orders -----------------
     public function placeOrder(array $data)
     {
-        try {
-            $order = Order::create([
-                'user_id'       => auth()->id(),
-                'restaurant_id' => $data['restaurant_id'],
-                'total_price'   => 0,
-                'status'        => 'pending',
+        $order = Order::create([
+            'user_id'       => auth()->id(),
+            'restaurant_id' => $data['restaurant_id'],
+            'total_price'   => 0,
+            'status'        => 'pending',
+        ]);
+
+        $totalPrice = 0;
+        foreach ($data['items'] as $item) {
+            $menu = Menu::findOrFail($item['menu_id']);
+            $price = $menu->price * $item['quantity'];
+            $order->items()->create([
+                'menu_id'  => $menu->id,
+                'quantity' => $item['quantity'],
+                'price'    => $price,
             ]);
-
-            $totalPrice = 0;
-
-            foreach ($data['items'] as $item) {
-                $menu = Menu::findOrFail($item['menu_id']);
-                $price = $menu->price * $item['quantity'];
-
-                $order->items()->create([
-                    'menu_id'  => $menu->id,
-                    'quantity' => $item['quantity'],
-                    'price'    => $price,
-                ]);
-
-                $totalPrice += $price;
-            }
-
-            $order->update(['total_price' => $totalPrice]);
-
-            return $order->load('items.menu');  
-        } catch (\Exception $e) {
-            throw new \Exception("Failed to place order: " . $e->getMessage());
+            $totalPrice += $price;
         }
+
+        $order->update(['total_price' => $totalPrice]);
+        return $order->load('items.menu');
     }
 
-    /**
-     * Track an order by ID.
-     */
     public function trackOrder(int $orderId)
     {
-        try {
-            return Order::with('items.menu')->findOrFail($orderId);
-        } catch (ModelNotFoundException $e) {
-            throw new \Exception("Order not found.");
-        } catch (\Exception $e) {
-            throw new \Exception("Failed to fetch order: " . $e->getMessage());
-        }
+        return Order::with('items.menu')->findOrFail($orderId);
     }
 
-    /**
-     * Submit a review for a restaurant.
-     */
+    // ----------------- Reviews -----------------
     public function submitReview(array $data)
     {
-        try {
-            return Review::create([
-                'user_id'       => auth()->id(),
-                'restaurant_id' => $data['restaurant_id'],
-                'rating'        => $data['rating'],
-                'comment'       => $data['comment'] ?? null,
-            ]);
-        } catch (\Exception $e) {
-            throw new \Exception("Failed to submit review: " . $e->getMessage());
+        return Review::create([
+            'user_id'       => auth()->id(),
+            'restaurant_id' => $data['restaurant_id'],
+            'rating'        => $data['rating'],
+            'comment'       => $data['comment'] ?? null,
+        ]);
+    }
+
+    public function updateReview(int $id, array $data)
+    {
+        $review = auth()->user()->reviews()->findOrFail($id);
+        $review->update($data);
+        return $review->fresh();
+    }
+
+    public function deleteReview(int $id)
+    {
+        $review = auth()->user()->reviews()->findOrFail($id);
+        return $review->delete();
+    }
+
+    // ----------------- Profile -----------------
+    public function getProfile()
+    {
+        return auth()->user();
+    }
+
+    public function updateProfile(array $data)
+    {
+        $user = auth()->user();
+        if (!empty($data['password'])) {
+            $data['password'] = Hash::make($data['password']);
+        } else {
+            unset($data['password']);
         }
+        $user->update($data);
+        return $user->fresh();
+    }
+
+    // ----------------- Addresses -----------------
+    public function listAddresses()
+    {
+        return auth()->user()->addresses()->get();
+    }
+
+    public function createAddress(array $data)
+    {
+        return auth()->user()->addresses()->create($data);
+    }
+
+    public function updateAddress(int $id, array $data)
+    {
+        $address = auth()->user()->addresses()->findOrFail($id);
+        $address->update($data);
+        return $address->fresh();
+    }
+
+    public function deleteAddress(int $id)
+    {
+        $address = auth()->user()->addresses()->findOrFail($id);
+        return $address->delete();
     }
 }
