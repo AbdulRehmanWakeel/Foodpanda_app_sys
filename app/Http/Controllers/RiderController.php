@@ -4,101 +4,131 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Services\Contracts\RiderServiceInterface;
+use App\Services\ErrorService;
+use Throwable;
 
 class RiderController extends Controller
 {
     protected $riderService;
+    protected $errorService;
 
-    public function __construct(RiderServiceInterface $riderService)
+    public function __construct(RiderServiceInterface $riderService, ErrorService $errorService)
     {
         $this->riderService = $riderService;
+        $this->errorService = $errorService;
     }
 
-     
-    public function register(Request $request)
+    /**
+     * Generic request handler to log errors
+     */
+    private function handleRequest(callable $callback, ?Request $request = null)
     {
-        $data = $request->validate([
-            'name' => 'required',
-            'email' => 'required|email|unique:users',
-            'phone' => 'required|unique:users',
-            'password' => 'required|min:6',
-        ]);
-
-        $user = $this->riderService->register($data);
-
-        return response()->json(['user' => $user], 201);
-    }
-
-     
-    public function login(Request $request)
-    {
-        $credentials = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
-        ]);
-
-        $result = $this->riderService->login($credentials);
-
-        if (!$result) {
-            return response()->json(['error' => 'Invalid credentials or not a rider'], 401);
-        }
-
-        return response()->json($result);  
-    }
-
-     
-    public function logout()
-    {
-        $this->riderService->logout();
-        return response()->json(['message' => 'Logged out successfully']);
-    }
-
-     
-    public function updateStatus(Request $request)
-    {
-        $data = $request->validate([
-            'is_online' => 'required|boolean'
-        ]);
-
-        $rider = auth()->user();
-        $result = $this->riderService->updateStatus($rider->id, $data['is_online']);
-
-        return response()->json($result);
-    }
-
-     
-    public function assignedOrders()
-    {
-        $rider = auth()->user();
-        if (!$rider) {
+        try {
+            return $callback();
+        } catch (Throwable $exception) {
+            $this->errorService->log($exception, $request);
+            $status = method_exists($exception, 'getStatusCode') ? $exception->getStatusCode() : 500;
             return response()->json([
                 'success' => false,
-                'message' => 'Unauthorized, no rider found'
-            ], 401);
+                'error' => $exception->getMessage()
+            ], $status);
         }
-        $orders = $this->riderService->assignedOrders($rider->id);
-        return response()->json($orders);
     }
 
+    // ---------------- Rider Auth ----------------
+    public function register(Request $request)
+    {
+        return $this->handleRequest(function () use ($request) {
+            $data = $request->validate([
+                'name' => 'required|string|max:191',
+                'email' => 'required|email|unique:users',
+                'phone' => 'required|unique:users',
+                'password' => 'required|min:6',
+            ]);
 
+            $user = $this->riderService->register($data);
 
-     
+            return response()->json(['success' => true, 'data' => $user], 201);
+        }, $request);
+    }
+
+    public function login(Request $request)
+    {
+        return $this->handleRequest(function () use ($request) {
+            $credentials = $request->validate([
+                'email' => 'required|email',
+                'password' => 'required',
+            ]);
+
+            $result = $this->riderService->login($credentials);
+
+            if (!$result) {
+                return response()->json(['success' => false, 'message' => 'Invalid credentials or not a rider'], 401);
+            }
+
+            return response()->json(['success' => true, 'data' => $result]);
+        }, $request);
+    }
+
+    public function logout()
+    {
+        return $this->handleRequest(function () {
+            $this->riderService->logout();
+            return response()->json(['success' => true, 'message' => 'Logged out successfully']);
+        });
+    }
+
+    // ---------------- Rider Status ----------------
+    public function updateStatus(Request $request)
+    {
+        return $this->handleRequest(function () use ($request) {
+            $data = $request->validate([
+                'is_online' => 'required|boolean'
+            ]);
+
+            $rider = auth()->user();
+            $result = $this->riderService->updateStatus($rider->id, $data['is_online']);
+
+            return response()->json(['success' => true, 'data' => $result]);
+        }, $request);
+    }
+
+    // ---------------- Orders ----------------
+    public function assignedOrders()
+    {
+        return $this->handleRequest(function () {
+            $rider = auth()->user();
+            if (!$rider) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized, no rider found'
+                ], 401);
+            }
+
+            $orders = $this->riderService->assignedOrders($rider->id);
+            return response()->json(['success' => true, 'data' => $orders]);
+        });
+    }
+
     public function updateOrderStatus(Request $request, $id)
     {
-        $data = $request->validate([
-            'status' => 'required|in:picked,delivered'
-        ]);
+        return $this->handleRequest(function () use ($request, $id) {
+            $data = $request->validate([
+                'status' => 'required|in:picked,delivered'
+            ]);
 
-        $order = $this->riderService->updateOrderStatus($id, $data['status']);
-        return response()->json($order);
+            $order = $this->riderService->updateOrderStatus($id, $data['status']);
+            return response()->json(['success' => true, 'data' => $order]);
+        }, $request);
     }
 
-     
+    // ---------------- Earnings ----------------
     public function earnings()
     {
-        $rider = auth()->user();
-        $earnings = $this->riderService->earnings($rider->id);
-        return response()->json(['earnings' => $earnings]);
+        return $this->handleRequest(function () {
+            $rider = auth()->user();
+            $earnings = $this->riderService->earnings($rider->id);
+            return response()->json(['success' => true, 'data' => $earnings]);
+        });
     }
-
 }
