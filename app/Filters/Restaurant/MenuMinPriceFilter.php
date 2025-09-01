@@ -4,10 +4,10 @@ namespace App\Filters\Restaurant;
 
 use Illuminate\Database\Eloquent\Builder;
 
-class MenuCategoryFilter
+class MenuMinPriceFilter
 {
     public static function apply(Builder $query, $value)
     {
-        return $query->where('category', $value);
+        return $query->where('price', '>=', $value);
     }
 }

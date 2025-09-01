@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use App\Services\Contracts\RestaurantServiceInterface;
 use App\Services\ErrorService;
 use Throwable;
@@ -28,7 +27,9 @@ class RestaurantController extends Controller
             return $callback();
         } catch (Throwable $exception) {
             $this->errorService->log($exception, $request);
+
             $status = method_exists($exception, 'getStatusCode') ? $exception->getStatusCode() : 500;
+
             return response()->json([
                 'success' => false,
                 'error' => $exception->getMessage()
@@ -40,17 +41,42 @@ class RestaurantController extends Controller
     public function index(Request $request)
     {
         return $this->handleRequest(function () use ($request) {
-            $filters = $this->resolveFilters($request);
-            $restaurants = $this->restaurantService->getRestaurants($filters, 10, $request);
-            return response()->json(['success' => true, 'data' => $restaurants]);
+            // Optional: simple filters from query params
+            $filters = $request->only(['name', 'cuisine_type', 'is_available']);
+            $perPage = $request->query('per_page', 10);
+            // Fetch paginated restaurants from service
+            $restaurants = $this->restaurantService->getRestaurants($filters, $perPage, $request);
+            // Return only the array of restaurants, not pagination metadata
+            return response()->json([
+                'success' => true,
+                'data' => $restaurants->items(), // items() extracts the array from the paginator
+                'meta' => [
+                    'current_page' => $restaurants->currentPage(),
+                    'last_page' => $restaurants->lastPage(),
+                    'per_page' => $restaurants->perPage(),
+                    'total' => $restaurants->total(),
+                ],
+            ]);
         }, $request);
     }
+
 
     public function show($id)
     {
         return $this->handleRequest(function () use ($id) {
             $restaurant = $this->restaurantService->getRestaurantById($id);
-            return response()->json(['success' => true, 'data' => $restaurant]);
+
+            if (!$restaurant) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Restaurant not found'
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => $restaurant
+            ]);
         });
     }
 
@@ -84,7 +110,10 @@ class RestaurantController extends Controller
             $restaurantId = $request->query('restaurant_id');
 
             if (!$restaurantId) {
-                return response()->json(['success' => false, 'message' => 'Restaurant ID not found'], 404);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Restaurant ID not provided'
+                ], 400);
             }
 
             $filters = $request->only(['earnings_date', 'menu_category', 'order_date', 'status']);
@@ -92,7 +121,10 @@ class RestaurantController extends Controller
 
             $orders = $this->restaurantService->getOrdersForRestaurant($restaurantId, $filters, $perPage, $request);
 
-            return response()->json(['success' => true, 'data' => $orders]);
+            return response()->json([
+                'success' => true,
+                'data' => $orders
+            ]);
         }, $request);
     }
 
@@ -107,7 +139,10 @@ class RestaurantController extends Controller
             $updatedOrder = $this->restaurantService->updateOrderStatus((int)$id, $status);
 
             if (!$updatedOrder) {
-                return response()->json(['success' => false, 'message' => 'Order ID not found'], 404);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Order not found'
+                ], 404);
             }
 
             return response()->json([
@@ -123,7 +158,11 @@ class RestaurantController extends Controller
     {
         return $this->handleRequest(function () use ($request, $id) {
             $stats = $this->restaurantService->getEarningsStats($id, $request->all(), $request);
-            return response()->json(['success' => true, 'data' => $stats]);
+
+            return response()->json([
+                'success' => true,
+                'data' => $stats
+            ]);
         }, $request);
     }
 }

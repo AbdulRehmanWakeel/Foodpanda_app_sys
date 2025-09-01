@@ -33,4 +33,3 @@ $middleware->alias([
 }) 
 ->withProviders([ App\Providers\ServiceRepositoryProvider::class, ]) 
 ->create();
-

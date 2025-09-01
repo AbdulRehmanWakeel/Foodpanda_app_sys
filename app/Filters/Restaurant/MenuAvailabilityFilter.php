@@ -4,10 +4,11 @@ namespace App\Filters\Restaurant;
 
 use Illuminate\Database\Eloquent\Builder;
 
-class MenuCategoryFilter
+class MenuAvailabilityFilter
 {
     public static function apply(Builder $query, $value)
     {
-        return $query->where('category', $value);
+        // Filter by availability (column `is_available`)
+        return $query->where('is_available', $value);
     }
 }

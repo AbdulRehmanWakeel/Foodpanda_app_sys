@@ -94,6 +94,7 @@ Route::prefix('customer')->middleware(['auth:api','role:customer'])->group(funct
     Route::post('/orders', [CustomerController::class, 'placeOrder']);
     Route::get('/orders/{id}', [CustomerController::class, 'trackOrder']);
 
+
     // Reviews
     Route::post('/reviews', [CustomerController::class, 'review']);
     Route::put('/reviews/{id}', [CustomerController::class, 'updateReview']);
