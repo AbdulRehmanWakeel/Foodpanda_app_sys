@@ -61,7 +61,6 @@ Route::prefix('restaurant')->middleware(['auth:api','role:restaurant'])->group(f
     // Orders
     Route::get('/restaurant/orders', [RestaurantController::class, 'orders']);
     Route::patch('/orders/{id}/status', [RestaurantController::class, 'updateOrderStatus']);
-
     // Menu CRUD
     Route::get('/menu/{restaurantId}', [MenuController::class, 'index']);
     Route::get('/menu/item/{id}', [MenuController::class, 'show']);

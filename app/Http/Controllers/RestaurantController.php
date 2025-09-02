@@ -41,15 +41,14 @@ class RestaurantController extends Controller
     public function index(Request $request)
     {
         return $this->handleRequest(function () use ($request) {
-            // Optional: simple filters from query params
             $filters = $request->only(['name', 'cuisine_type', 'is_available']);
             $perPage = $request->query('per_page', 10);
-            // Fetch paginated restaurants from service
+
             $restaurants = $this->restaurantService->getRestaurants($filters, $perPage, $request);
-            // Return only the array of restaurants, not pagination metadata
+
             return response()->json([
                 'success' => true,
-                'data' => $restaurants->items(), // items() extracts the array from the paginator
+                'data' => $restaurants->items(),
                 'meta' => [
                     'current_page' => $restaurants->currentPage(),
                     'last_page' => $restaurants->lastPage(),
@@ -59,7 +58,6 @@ class RestaurantController extends Controller
             ]);
         }, $request);
     }
-
 
     public function show($id)
     {
@@ -84,14 +82,14 @@ class RestaurantController extends Controller
     {
         return $this->handleRequest(function () use ($request) {
             $validated = $request->validate([
-                'name'            => 'required|string|max:255',
-                'email'           => 'required|email|unique:restaurants,email',
-                'phone'           => 'required|string|max:20',
-                'address'         => 'required|string|max:255',
-                'cuisine_type'    => 'nullable|string|max:100',
+                'name' => 'required|string|max:255',
+                'email' => 'required|email|unique:restaurants,email',
+                'phone' => 'required|string|max:20',
+                'address' => 'required|string|max:255',
+                'cuisine_type' => 'nullable|string|max:100',
                 'delivery_radius' => 'nullable|numeric',
-                'opening_time'    => 'nullable|date_format:H:i',
-                'closing_time'    => 'nullable|date_format:H:i',
+                'opening_time' => 'nullable|date_format:H:i',
+                'closing_time' => 'nullable|date_format:H:i',
             ]);
 
             $restaurant = $this->restaurantService->createRestaurant($validated);
@@ -152,6 +150,7 @@ class RestaurantController extends Controller
             ]);
         }, $request);
     }
+
 
     // ---------------- Earnings stats ----------------
     public function stats(Request $request, $id)

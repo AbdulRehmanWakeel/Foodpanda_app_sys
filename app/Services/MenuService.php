@@ -9,87 +9,100 @@ use Illuminate\Http\UploadedFile;
 
 class MenuService implements MenuServiceInterface
 {
-    // Get paginated menu items
+    /**
+     * List menu items with optional filters and pagination
+     */
     public function getMenuItems(int $restaurantId, array $filters = [], int $perPage = 10)
     {
-        $query = Menu::where('restaurant_id', $restaurantId)->with('restaurant');
+        $query = Menu::where('restaurant_id', $restaurantId);
 
         $filterMap = [
-            'category' => \App\Filters\MenuCategoryFilter::class,
-            'availability' => \App\Filters\MenuAvailabilityFilter::class,
-            'min_price' => \App\Filters\MenuMinPriceFilter::class,
-            'max_price' => \App\Filters\MenuMaxPriceFilter::class,
-            'q' => \App\Filters\MenuSearchFilter::class,
+            'category'     => \App\Filters\MenuCategoryFilter::class,
+            'is_available' => \App\Filters\MenuAvailabilityFilter::class,
+            'min_price'    => \App\Filters\MenuMinPriceFilter::class,
+            'max_price'    => \App\Filters\MenuMaxPriceFilter::class,
+            'q'            => \App\Filters\MenuSearchFilter::class,
         ];
 
-        // Keep only valid filters with non-empty values
-        $filters = array_filter($filters, fn($key, $value) => isset($filterMap[$key]) && $value !== null, ARRAY_FILTER_USE_BOTH);
+        // Keep only valid filters with non-null values
+        $filters = array_filter(
+            $filters,
+            fn($value, $key) => isset($filterMap[$key]) && $value !== null,
+            ARRAY_FILTER_USE_BOTH
+        );
 
-        // Cast availability to integer for DB match
-        if (isset($filters['availability'])) {
-            $filters['availability'] = filter_var($filters['availability'], FILTER_VALIDATE_BOOLEAN) ? 1 : 0;
-        }
-
+        // Apply filters using the pipeline
         $query = FilterPipeline::apply($query, $filters, $filterMap);
 
+        // Paginate results
         $paginated = $query->paginate($perPage);
 
-        // Format image for frontend
+        // Transform image URLs
         $paginated->getCollection()->transform(function ($item) {
-            if ($item->image) {
-                $item->image = [
-                    'image_path' => $item->image,
-                    'url' => url('storage/' . $item->image),
-                    'created_at' => $item->created_at,
-                    'updated_at' => $item->updated_at,
-                ];
-            }
+            $item->image = $item->image
+                ? (filter_var($item->image, FILTER_VALIDATE_URL)
+                    ? ['url' => $item->image]
+                    : ['url' => url('storage/' . $item->image)])
+                : null;
             return $item;
         });
 
         return $paginated;
     }
 
-    // Get single menu item
+    /**
+     * Get a single menu item by ID
+     */
     public function getMenuItemById(int $id)
     {
-        $menu = Menu::with('restaurant')->find($id);
-        if ($menu && $menu->image) {
-            $menu->image = [
-                'image_path' => $menu->image,
-                'url' => url('storage/' . $menu->image),
-                'created_at' => $menu->created_at,
-                'updated_at' => $menu->updated_at,
-            ];
+        $menu = Menu::find($id);
+        if (!$menu) {
+            return null;
         }
+
+        $menu->image = $menu->image
+            ? (filter_var($menu->image, FILTER_VALIDATE_URL)
+                ? ['url' => $menu->image]
+                : ['url' => url('storage/' . $menu->image)])
+            : null;
+
         return $menu;
     }
 
-    // Create menu item
+    /**
+     * Create a new menu item
+     */
     public function createMenuItem(array $data)
     {
-        $data['availability'] = $data['availability'] ?? true;
-
+        // If image is uploaded file
         if (isset($data['image']) && $data['image'] instanceof UploadedFile) {
             $data['image'] = $data['image']->store('menus', 'public');
         }
-
+        // If image is a URL string, just save it as-is
+        if (isset($data['image']) && is_string($data['image']) && filter_var($data['image'], FILTER_VALIDATE_URL)) {
+            // keep $data['image'] as URL
+        }
         return Menu::create([
             'restaurant_id' => $data['restaurant_id'],
             'name' => $data['name'],
             'price' => $data['price'],
             'description' => $data['description'] ?? null,
             'category' => $data['category'] ?? null,
-            'is_available' => $data['availability'],
+            'is_available' => $data['is_available'] ?? true,
             'image' => $data['image'] ?? null,
         ]);
     }
 
-    // Update menu item
+
+    /**
+     * Update an existing menu item
+     */
     public function updateMenuItem(int $id, array $data)
     {
         $menu = Menu::find($id);
-        if (!$menu) return null;
+        if (!$menu) {
+            return null;
+        }
 
         if (isset($data['image']) && $data['image'] instanceof UploadedFile) {
             $data['image'] = $data['image']->store('menus', 'public');
@@ -97,22 +110,27 @@ class MenuService implements MenuServiceInterface
 
         $menu->update([
             'restaurant_id' => $data['restaurant_id'] ?? $menu->restaurant_id,
-            'name' => $data['name'] ?? $menu->name,
-            'price' => $data['price'] ?? $menu->price,
-            'description' => $data['description'] ?? $menu->description,
-            'category' => $data['category'] ?? $menu->category,
-            'is_available' => $data['availability'] ?? $menu->is_available,
-            'image' => $data['image'] ?? $menu->image,
+            'name'          => $data['name'] ?? $menu->name,
+            'price'         => $data['price'] ?? $menu->price,
+            'description'   => $data['description'] ?? $menu->description,
+            'category'      => $data['category'] ?? $menu->category,
+            'is_available'  => $data['is_available'] ?? $menu->is_available,
+            'image'         => $data['image'] ?? $menu->image,
         ]);
 
         return $menu;
     }
 
-    // Delete menu item
+    /**
+     * Delete a menu item by ID
+     */
     public function deleteMenuItem(int $id)
     {
         $menu = Menu::find($id);
-        if (!$menu) return false;
+        if (!$menu) {
+            return false;
+        }
+
         return $menu->delete();
     }
 }
