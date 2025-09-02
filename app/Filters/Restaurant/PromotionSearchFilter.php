@@ -1,7 +1,6 @@
 <?php
 
-namespace App\Filters;
-
+namespace App\Filters\Restaurant;
 use Illuminate\Database\Eloquent\Builder;
 
 class PromotionSearchFilter

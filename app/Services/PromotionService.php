@@ -40,22 +40,22 @@ class PromotionService implements PromotionServiceInterface
 
     public function createPromotion(array $data): Promotion
     {
+        if (!isset($data['restaurant_id']) || !$data['restaurant_id']) {
+            throw new \Exception('Cannot create promotion without restaurant_id.');
+        }
         return Promotion::create($data);
     }
-
-    public function updatePromotion(int $id, array $data): ?Promotion
+    public function updatePromotion(int $id, array $data): Promotion
     {
-        $promotion = Promotion::find($id);
-
-        if (!$promotion) {
-            throw new ModelNotFoundException("Promotion not found");
+        $promotion = Promotion::findOrFail($id);
+        if (isset($data['restaurant_id']) && $promotion->restaurant_id !== $data['restaurant_id']) {
+            $promotion->restaurant_id = $data['restaurant_id'];
         }
-
         $promotion->update($data);
-
         return $promotion;
     }
 
+    
     public function deletePromotion(int $id): bool
     {
         $promotion = Promotion::find($id);
