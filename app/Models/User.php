@@ -81,6 +81,12 @@ class User extends Authenticatable implements JWTSubject
     {
         return $this->hasMany(Review::class);
     }
+    public function restaurant()
+    {
+        return $this->hasOne(Restaurant::class);
+    }
+
+
 
     public static function getFilterMap(): array
     {

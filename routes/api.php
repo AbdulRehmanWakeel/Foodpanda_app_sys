@@ -7,6 +7,7 @@ use App\Http\Controllers\RestaurantController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\RiderController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\PromotionController;
 use App\Http\Controllers\ErrorController;
 
 // ================== Auth routes ==================
@@ -68,6 +69,12 @@ Route::prefix('restaurant')->middleware(['auth:api','role:restaurant'])->group(f
     Route::post('/menu', [MenuController::class, 'store']);
     Route::patch('/menu/{id}', [MenuController::class, 'update']);
     Route::delete('/menu/{id}', [MenuController::class, 'destroy']);
+
+    Route::get('/promotions', [PromotionController::class, 'index']);       
+    Route::get('/promotions/{id}', [PromotionController::class, 'show']);   
+    Route::post('/promotions', [PromotionController::class, 'store']);      
+    Route::patch('/promotions/{id}', [PromotionController::class, 'update']);  
+    Route::delete('/promotions/{id}', [PromotionController::class, 'destroy']);  
 });
 
 // ================== Rider Panel ==================

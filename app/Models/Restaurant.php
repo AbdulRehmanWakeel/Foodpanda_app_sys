@@ -22,7 +22,11 @@ class Restaurant extends Model
         'commission_rate',    
         'is_verified',        
     ];
-
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+    
     public function owner()
     {
         return $this->belongsTo(User::class, 'user_id');
