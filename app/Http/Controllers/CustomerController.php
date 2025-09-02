@@ -9,12 +9,12 @@ use Throwable;
 
 class CustomerController extends Controller
 {
-    protected $customerService;
-    protected $errorService;
+    protected CustomerServiceInterface $service; 
+    protected ErrorService $errorService;
 
-    public function __construct(CustomerServiceInterface $customerService, ErrorService $errorService)
+    public function __construct(CustomerServiceInterface $service, ErrorService $errorService)
     {
-        $this->customerService = $customerService;
+        $this->service = $service;        
         $this->errorService = $errorService;
     }
 
@@ -43,7 +43,7 @@ class CustomerController extends Controller
     {
         return $this->handleRequest(fn() => response()->json([
             'success' => true,
-            'data' => $this->customerService->getRestaurants($request->all())
+            'data' => $this->service->getRestaurants($request->all())
         ]), $request);
     }
 
@@ -51,7 +51,7 @@ class CustomerController extends Controller
     {
         return $this->handleRequest(fn() => response()->json([
             'success' => true,
-            'data' => $this->customerService->getRestaurantMenu((int)$id)
+            'data' => $this->service->getRestaurantMenu((int)$id)
         ]));
     }
 
@@ -60,7 +60,7 @@ class CustomerController extends Controller
     {
         return $this->handleRequest(fn() => response()->json([
             'success' => true,
-            'data' => $this->customerService->placeOrder($request->all())
+            'data' => $this->service->placeOrder($request->all())
         ]), $request);
     }
 
@@ -68,8 +68,42 @@ class CustomerController extends Controller
     {
         return $this->handleRequest(fn() => response()->json([
             'success' => true,
-            'data' => $this->customerService->trackOrder((int)$id)
+            'data' => $this->service->trackOrder((int)$id)
         ]));
+    }
+
+    public function orderHistory(Request $request)
+    {
+        $filters = $request->only(['status']);
+        $perPage = $request->get('per_page', 10);
+
+        $orders = $this->service->getOrderHistory($filters, $perPage);
+
+        return response()->json([
+            'success' => true,
+            'data' => $orders->items(),
+            'meta' => [
+                'current_page' => $orders->currentPage(),
+                'last_page' => $orders->lastPage(),
+                'per_page' => $orders->perPage(),
+                'total' => $orders->total(),
+            ]
+        ]);
+    }
+
+    public function reorder($orderId)
+    {
+        try {
+            $newOrder = $this->service->reorder($orderId);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Order reordered successfully',
+                'data'    => $newOrder
+            ]);
+        } catch (\Exception $e) {
+            return $this->errorService->handle($e);
+        }
     }
 
     // ----------------- Reviews -----------------
@@ -77,7 +111,7 @@ class CustomerController extends Controller
     {
         return $this->handleRequest(fn() => response()->json([
             'success' => true,
-            'data' => $this->customerService->submitReview($request->all())
+            'data' => $this->service->submitReview($request->all())
         ]), $request);
     }
 
@@ -85,7 +119,7 @@ class CustomerController extends Controller
     {
         return $this->handleRequest(fn() => response()->json([
             'success' => true,
-            'data' => $this->customerService->updateReview((int)$id, $request->all())
+            'data' => $this->service->updateReview((int)$id, $request->all())
         ]), $request);
     }
 
@@ -93,7 +127,7 @@ class CustomerController extends Controller
     {
         return $this->handleRequest(fn() => response()->json([
             'success' => true,
-            'data' => $this->customerService->deleteReview((int)$id)
+            'data' => $this->service->deleteReview((int)$id)
         ]));
     }
 
@@ -102,7 +136,7 @@ class CustomerController extends Controller
     {
         return $this->handleRequest(fn() => response()->json([
             'success' => true,
-            'data' => $this->customerService->getProfile()
+            'data' => $this->service->getProfile()
         ]));
     }
 
@@ -110,7 +144,7 @@ class CustomerController extends Controller
     {
         return $this->handleRequest(fn() => response()->json([
             'success' => true,
-            'data' => $this->customerService->updateProfile($request->all())
+            'data' => $this->service->updateProfile($request->all())
         ]), $request);
     }
 
@@ -119,7 +153,7 @@ class CustomerController extends Controller
     {
         return $this->handleRequest(fn() => response()->json([
             'success' => true,
-            'data' => $this->customerService->listAddresses()
+            'data' => $this->service->listAddresses()
         ]));
     }
 
@@ -127,7 +161,7 @@ class CustomerController extends Controller
     {
         return $this->handleRequest(fn() => response()->json([
             'success' => true,
-            'data' => $this->customerService->createAddress($request->all())
+            'data' => $this->service->createAddress($request->all())
         ]), $request);
     }
 
@@ -135,7 +169,7 @@ class CustomerController extends Controller
     {
         return $this->handleRequest(fn() => response()->json([
             'success' => true,
-            'data' => $this->customerService->updateAddress((int)$id, $request->all())
+            'data' => $this->service->updateAddress((int)$id, $request->all())
         ]), $request);
     }
 
@@ -143,7 +177,7 @@ class CustomerController extends Controller
     {
         return $this->handleRequest(fn() => response()->json([
             'success' => true,
-            'data' => $this->customerService->deleteAddress((int)$id)
+            'data' => $this->service->deleteAddress((int)$id)
         ]));
     }
 }

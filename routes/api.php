@@ -61,6 +61,7 @@ Route::prefix('restaurant')->middleware(['auth:api','role:restaurant'])->group(f
     // Orders
     Route::get('/restaurant/orders', [RestaurantController::class, 'orders']);
     Route::patch('/orders/{id}/status', [RestaurantController::class, 'updateOrderStatus']);
+
     // Menu CRUD
     Route::get('/menu/{restaurantId}', [MenuController::class, 'index']);
     Route::get('/menu/item/{id}', [MenuController::class, 'show']);
@@ -92,6 +93,8 @@ Route::prefix('customer')->middleware(['auth:api','role:customer'])->group(funct
     // Orders
     Route::post('/orders', [CustomerController::class, 'placeOrder']);
     Route::get('/orders/{id}', [CustomerController::class, 'trackOrder']);
+    Route::get('orders', [CustomerController::class, 'orderHistory']);
+    Route::post('orders/{orderId}/reorder', [CustomerController::class, 'reorder']);
 
 
     // Reviews

@@ -11,7 +11,8 @@ interface CustomerServiceInterface
     // Orders
     public function placeOrder(array $data);
     public function trackOrder(int $orderId);
-
+    public function getOrderHistory(array $filters = [], int $perPage = 10);
+    public function reorder(int $orderId);
 
 
     // Reviews
