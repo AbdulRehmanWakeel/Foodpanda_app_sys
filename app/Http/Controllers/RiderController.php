@@ -122,13 +122,17 @@ class RiderController extends Controller
         }, $request);
     }
 
-    // ---------------- Earnings ----------------
     public function earnings()
     {
         return $this->handleRequest(function () {
             $rider = auth()->user();
             $earnings = $this->riderService->earnings($rider->id);
-            return response()->json(['success' => true, 'data' => $earnings]);
+            return response()->json([
+                'success' => true,
+                'data' => $earnings
+            ]);
         });
     }
+
+
 }

@@ -87,11 +87,17 @@ class RiderService implements RiderServiceInterface
     public function earnings(int $riderId)
     {
         $rider = User::findOrFail($riderId);
-        $orders = $rider->orders()->whereIn('status', ['delivered'])->get();
-        // Sum rider_fee if set, otherwise calculate 15% of total_price
-        return $orders->sum(function($order) {
-            return $order->rider_fee > 0 ? $order->rider_fee : $order->total_price * 0.15;
+        $orders = $rider->orders()->where('status', 'delivered')->get();
+        $totalEarnings = $orders->sum(function ($order) {
+            return $order->rider_fee > 0
+            ? $order->rider_fee
+            : $order->total_price * 0.15;
         });
+        return [
+            'total_orders' => $orders->count(),
+            'total_earnings' => $totalEarnings,
+            'orders' => $orders,
+        ];
     }
 
 
