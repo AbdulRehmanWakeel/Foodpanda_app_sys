@@ -74,7 +74,7 @@ class PromotionController extends Controller
                 'description' => 'nullable|string',
                 'discount'    => 'required|numeric|min:0',
                 'type'        => 'required|string|in:percentage,fixed,free_delivery',
-                'status'      => 'required|string|in:active,inactive',
+                'status' => 'sometimes|required|string|in:active,inactive,scheduled,paused',
                 'start_date'  => 'required|date',
                 'end_date'    => 'nullable|date|after_or_equal:start_date',
             ]);
@@ -126,7 +126,7 @@ class PromotionController extends Controller
                 'description' => 'nullable|string',
                 'discount'    => 'sometimes|required|numeric|min:0',
                 'type'        => 'sometimes|required|string|in:percentage,fixed,free_delivery',
-                'status'      => 'sometimes|required|string|in:active,inactive',
+                'status' => 'sometimes|required|string|in:active,inactive,scheduled,paused',
                 'start_date'  => 'sometimes|required|date',
                 'end_date'    => 'nullable|date|after_or_equal:start_date',
             ]);

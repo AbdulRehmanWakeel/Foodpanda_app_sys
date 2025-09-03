@@ -15,7 +15,7 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->decimal('discount', 8, 2);
             $table->enum('type', ['percentage', 'fixed']);
-            $table->enum('status', ['active', 'inactive'])->default('active');
+            $table->enum('status', ['active','inactive','scheduled','paused'])->default('active');
             $table->date('start_date');
             $table->date('end_date')->nullable();
             $table->timestamps();
