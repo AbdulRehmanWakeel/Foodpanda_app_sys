@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Services;
+use Illuminate\Support\Facades\Auth;
 
 use App\Services\Contracts\RestaurantServiceInterface;
 use App\Models\Restaurant;
@@ -33,9 +34,7 @@ class RestaurantService implements RestaurantServiceInterface
 
     public function createRestaurant(array $data)
     {
-        // Attach the logged-in user as restaurant owner
         $data['user_id'] = auth()->id();
-        // default values if not provided
         $data['commission_rate'] = $data['commission_rate'] ?? 15.0;
         $data['approval_status'] = $data['approval_status'] ?? 'pending';
         $data['is_verified'] = $data['is_verified'] ?? 0;
@@ -43,8 +42,19 @@ class RestaurantService implements RestaurantServiceInterface
     }
 
 
-    public function getOrdersForRestaurant(int $restaurantId, $filters = [], $perPage = 10, $request = null)
+    public function getOrdersForRestaurant(array $filters = [], int $perPage = 10, $request = null)
     {
+        $user = Auth::user();
+
+        if (!$user || !$user->restaurant_id) {
+            return [
+                'success' => false,
+                'error'   => 'Restaurant ID not found for this user.'
+            ];
+        }
+
+        $restaurantId = $user->restaurant_id;
+
         $query = Order::where('restaurant_id', $restaurantId);
 
         $filterMap = [
@@ -58,7 +68,6 @@ class RestaurantService implements RestaurantServiceInterface
 
         return $query->paginate($perPage);
     }
-
     /**
      * Update order status
      */

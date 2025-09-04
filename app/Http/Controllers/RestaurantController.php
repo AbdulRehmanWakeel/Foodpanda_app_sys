@@ -105,23 +105,15 @@ class RestaurantController extends Controller
     public function orders(Request $request)
     {
         return $this->handleRequest(function () use ($request) {
-            $restaurantId = $request->query('restaurant_id');
-
-            if (!$restaurantId) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Restaurant ID not provided'
-                ], 400);
-            }
-
             $filters = $request->only(['earnings_date', 'menu_category', 'order_date', 'status']);
             $perPage = $request->query('per_page', 10);
-
-            $orders = $this->restaurantService->getOrdersForRestaurant($restaurantId, $filters, $perPage, $request);
-
+            $orders = $this->restaurantService->getOrdersForRestaurant($filters, $perPage, $request);
+            if (isset($orders['success']) && $orders['success'] === false) {
+                return response()->json($orders, 400);
+            }
             return response()->json([
                 'success' => true,
-                'data' => $orders
+                'data'    => $orders
             ]);
         }, $request);
     }

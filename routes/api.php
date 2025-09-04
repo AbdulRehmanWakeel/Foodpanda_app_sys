@@ -60,7 +60,7 @@ Route::prefix('restaurant')->middleware(['auth:api','role:restaurant'])->group(f
     Route::get('restaurants/{id}/stats', [RestaurantController::class, 'stats']);
 
     // Orders
-    Route::get('/restaurant/orders', [RestaurantController::class, 'orders']);
+    Route::get('/orders', [RestaurantController::class, 'orders']);
     Route::patch('/orders/{id}/status', [RestaurantController::class, 'updateOrderStatus']);
 
     // Menu CRUD
