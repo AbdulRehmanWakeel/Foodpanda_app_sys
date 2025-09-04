@@ -9,6 +9,8 @@ use App\Http\Controllers\RiderController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\PromotionController;
 use App\Http\Controllers\ErrorController;
+use App\Http\Controllers\CartController;
+use App\Http\Controllers\CartItemController;
 
 // ================== Auth routes ==================
 Route::prefix('auth')->group(function () {
@@ -118,7 +120,22 @@ Route::prefix('customer')->middleware(['auth:api','role:customer'])->group(funct
     Route::post('/addresses', [CustomerController::class, 'createAddress']);
     Route::put('/addresses/{id}', [CustomerController::class, 'updateAddress']);
     Route::delete('/addresses/{id}', [CustomerController::class, 'deleteAddress']);
+
+    // Cart 
+    Route::get('/carts', [CartController::class, 'index']);
+    Route::post('/carts', [CartController::class, 'store']);
+    Route::get('/carts/{id}', [CartController::class, 'show']);
+    Route::patch('/carts/{id}', [CartController::class, 'update']);
+    Route::delete('/carts/{id}', [CartController::class, 'destroy']);
+
+    // Cart Items  
+    Route::get('/carts/{cartId}/items', [CartItemController::class, 'index']);
+    Route::get('/cart-items/{id}', [CartItemController::class, 'show']);
+    Route::post('/carts/{cartId}/items', [CartItemController::class, 'store']);
+    Route::patch('/cart-items/{id}', [CartItemController::class, 'update']);
+    Route::delete('/cart-items/{id}', [CartItemController::class, 'destroy']);
 });
+
 
 // ================== Error Logs ==================
 Route::get('/error-logs', [ErrorController::class, 'index']);

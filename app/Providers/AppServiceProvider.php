@@ -11,6 +11,11 @@ use App\Services\RiderService;
 use App\Services\Contracts\RiderServiceInterface;
 use App\Services\Contracts\CustomerServiceInterface;
 use App\Services\CustomerService;
+use App\Services\Contracts\CartServiceInterface;
+use App\Services\CartService;
+use App\Services\Contracts\CartItemServiceInterface;
+use App\Services\CartItemService;
+
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -36,6 +41,15 @@ class AppServiceProvider extends ServiceProvider
             CustomerServiceInterface::class,
             CustomerService::class
         );
+        $this->app->bind(
+            CartServiceInterface::class, 
+            CartService::class
+        );
+        $this->app->bind(
+            CartItemServiceInterface::class,
+            CartItemService::class
+        );
+
     }
 
     /**
