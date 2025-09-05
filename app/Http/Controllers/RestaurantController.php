@@ -122,8 +122,9 @@ class RestaurantController extends Controller
     {
         return $this->handleRequest(function () use ($request, $id) {
             $request->validate([
-                'status' => 'required|string|in:pending,preparing,delivered,canceled'
+                'status' => 'required|string|in:pending,preparing,delivered,cancelled,completed,ready'
             ]);
+
 
             $status = $request->input('status');
             $updatedOrder = $this->restaurantService->updateOrderStatus((int)$id, $status);
