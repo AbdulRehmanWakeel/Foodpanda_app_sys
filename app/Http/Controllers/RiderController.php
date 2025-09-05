@@ -19,7 +19,7 @@ class RiderController extends Controller
     }
 
     /**
-     * Generic request handler to log errors
+     * Generic request handler with error logging
      */
     private function handleRequest(callable $callback, ?Request $request = null)
     {
@@ -28,9 +28,10 @@ class RiderController extends Controller
         } catch (Throwable $exception) {
             $this->errorService->log($exception, $request);
             $status = method_exists($exception, 'getStatusCode') ? $exception->getStatusCode() : 500;
+
             return response()->json([
                 'success' => false,
-                'error' => $exception->getMessage()
+                'error'   => $exception->getMessage()
             ], $status);
         }
     }
@@ -40,9 +41,9 @@ class RiderController extends Controller
     {
         return $this->handleRequest(function () use ($request) {
             $data = $request->validate([
-                'name' => 'required|string|max:191',
-                'email' => 'required|email|unique:users',
-                'phone' => 'required|unique:users',
+                'name'     => 'required|string|max:191',
+                'email'    => 'required|email|unique:users',
+                'phone'    => 'required|unique:users',
                 'password' => 'required|min:6',
             ]);
 
@@ -56,14 +57,17 @@ class RiderController extends Controller
     {
         return $this->handleRequest(function () use ($request) {
             $credentials = $request->validate([
-                'email' => 'required|email',
+                'email'    => 'required|email',
                 'password' => 'required',
             ]);
 
             $result = $this->riderService->login($credentials);
 
             if (!$result) {
-                return response()->json(['success' => false, 'message' => 'Invalid credentials or not a rider'], 401);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid credentials or not a rider'
+                ], 401);
             }
 
             return response()->json(['success' => true, 'data' => $result]);
@@ -78,7 +82,29 @@ class RiderController extends Controller
         });
     }
 
-    // ---------------- Rider Status ----------------
+    // ---------------- Profile ----------------
+    public function profile()
+    {
+        return $this->handleRequest(function () {
+            $rider = auth()->user();
+            $profile = $this->riderService->getProfile($rider->id);
+
+            return response()->json(['success' => true, 'data' => $profile]);
+        });
+    }
+
+    public function updateProfile(Request $request)
+    {
+        return $this->handleRequest(function () use ($request) {
+            $rider = auth()->user();
+            $updated = $this->riderService->updateProfile($rider->id, $request->all());
+
+            return response()->json(['success' => true, 'data' => $updated]);
+        }, $request);
+    }
+
+
+    // ---------------- Status ----------------
     public function updateStatus(Request $request)
     {
         return $this->handleRequest(function () use ($request) {
@@ -98,12 +124,6 @@ class RiderController extends Controller
     {
         return $this->handleRequest(function () {
             $rider = auth()->user();
-            if (!$rider) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Unauthorized, no rider found'
-                ], 401);
-            }
 
             $orders = $this->riderService->assignedOrders($rider->id);
             return response()->json(['success' => true, 'data' => $orders]);
@@ -122,17 +142,24 @@ class RiderController extends Controller
         }, $request);
     }
 
+    public function orderHistory()
+    {
+        return $this->handleRequest(function () {
+            $rider = auth()->user();
+            $history = $this->riderService->orderHistory($rider->id);
+
+            return response()->json(['success' => true, 'data' => $history]);
+        });
+    }
+
+    // ---------------- Earnings ----------------
     public function earnings()
     {
         return $this->handleRequest(function () {
             $rider = auth()->user();
             $earnings = $this->riderService->earnings($rider->id);
-            return response()->json([
-                'success' => true,
-                'data' => $earnings
-            ]);
+
+            return response()->json(['success' => true, 'data' => $earnings]);
         });
     }
-
-
 }

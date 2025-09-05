@@ -81,17 +81,31 @@ Route::prefix('restaurant')->middleware(['auth:api','role:restaurant'])->group(f
 
 // ================== Rider Panel ==================
 Route::prefix('riders')->group(function () {
+    // Rider Auth
     Route::post('/register', [RiderController::class, 'register']);
     Route::post('/login', [RiderController::class, 'login']);
 });
 
-Route::prefix('riders')->middleware(['auth:api','role:rider'])->group(function () {
+Route::prefix('riders')->middleware(['auth:api', 'role:rider'])->group(function () {
+    // Auth
     Route::post('/logout', [RiderController::class, 'logout']);
+
+    // Profile
+    Route::get('/profile', [RiderController::class, 'profile']);
+    Route::put('/profile', [RiderController::class, 'updateProfile']);
+
+    // Status
     Route::post('/status', [RiderController::class, 'updateStatus']);
+
+    // Orders
     Route::get('/orders', [RiderController::class, 'assignedOrders']);
     Route::patch('/orders/{id}', [RiderController::class, 'updateOrderStatus']);
+    Route::get('/orders/history', [RiderController::class, 'orderHistory']);
+
+    // Earnings
     Route::get('/earnings', [RiderController::class, 'earnings']);
 });
+
 
 // ================== Customer Panel ==================
 Route::prefix('customer')->middleware(['auth:api','role:customer'])->group(function () {

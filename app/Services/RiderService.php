@@ -9,18 +9,19 @@ use Illuminate\Support\Facades\Hash;
 
 class RiderService implements RiderServiceInterface
 {
+    // ---------------- Auth ----------------
     public function register(array $data)
     {
         $user = User::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'phone' => $data['phone'],
+            'name'     => $data['name'],
+            'email'    => $data['email'],
+            'phone'    => $data['phone'],
             'password' => Hash::make($data['password']),
         ]);
 
         $user->assignRole('rider');
 
-        return $user;  
+        return $user;
     }
 
     public function login(array $credentials)
@@ -36,8 +37,8 @@ class RiderService implements RiderServiceInterface
         }
 
         return [
-            'user' => $user,
-            'token' => $token  
+            'user'  => $user,
+            'token' => $token,
         ];
     }
 
@@ -47,6 +48,36 @@ class RiderService implements RiderServiceInterface
         return ['message' => 'Logged out successfully'];
     }
 
+    // ---------------- Profile ----------------
+    public function getProfile($riderId)
+    {
+        return User::with('roles')->findOrFail($riderId);
+    }
+
+    public function updateProfile($riderId, array $data)
+    {
+        $rider = User::findOrFail($riderId);
+        $rider->update($data);
+        return $rider;
+    }
+
+    public function uploadDocuments($riderId, array $files)
+    {
+        $rider = User::findOrFail($riderId);
+
+        $uploaded = [];
+        foreach ($files as $key => $file) {
+            $path = $file->store('riders/documents', 'public');
+            $uploaded[$key] = $path;
+        }
+
+        $rider->documents = json_encode($uploaded);
+        $rider->save();
+
+        return $uploaded;
+    }
+
+    // ---------------- Status ----------------
     public function updateStatus(int $riderId, bool $isOnline)
     {
         $rider = User::findOrFail($riderId);
@@ -54,22 +85,18 @@ class RiderService implements RiderServiceInterface
         return $rider;
     }
 
+    // ---------------- Orders ----------------
     public function assignedOrders(int $riderId)
     {
         $orders = Order::where('rider_id', $riderId)->get();
-        if ($orders->isEmpty()) {
-            return [
-                'success' => true,
-                'message' => 'No orders assigned to this rider yet',
-                'rider_id' => $riderId,
-                'orders' => []
-            ];
-        }
+
         return [
-            'success' => true,
-            'message' => 'Orders fetched successfully',
+            'success'  => true,
+            'message'  => $orders->isEmpty()
+                ? 'No orders assigned to this rider yet'
+                : 'Orders fetched successfully',
             'rider_id' => $riderId,
-            'orders' => $orders
+            'orders'   => $orders,
         ];
     }
 
@@ -84,21 +111,29 @@ class RiderService implements RiderServiceInterface
         return $order;
     }
 
+    public function orderHistory($riderId)
+    {
+        return Order::where('rider_id', $riderId)
+            ->orderBy('created_at', 'desc')
+            ->get();
+    }
+
+    // ---------------- Earnings ----------------
     public function earnings(int $riderId)
     {
         $rider = User::findOrFail($riderId);
         $orders = $rider->orders()->where('status', 'delivered')->get();
+
         $totalEarnings = $orders->sum(function ($order) {
             return $order->rider_fee > 0
-            ? $order->rider_fee
-            : $order->total_price * 0.15;
+                ? $order->rider_fee
+                : $order->total_price * 0.15;
         });
+
         return [
-            'total_orders' => $orders->count(),
+            'total_orders'   => $orders->count(),
             'total_earnings' => $totalEarnings,
-            'orders' => $orders,
+            'orders'         => $orders,
         ];
     }
-
-
 }
