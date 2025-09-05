@@ -72,11 +72,12 @@ Route::prefix('restaurant')->middleware(['auth:api','role:restaurant'])->group(f
     Route::patch('/menu/{id}', [MenuController::class, 'update']);
     Route::delete('/menu/{id}', [MenuController::class, 'destroy']);
 
-    Route::get('/promotions', [PromotionController::class, 'index']);       
-    Route::get('/promotions/{id}', [PromotionController::class, 'show']);   
-    Route::post('/promotions', [PromotionController::class, 'store']);      
-    Route::patch('/promotions/{id}', [PromotionController::class, 'update']);  
-    Route::delete('/promotions/{id}', [PromotionController::class, 'destroy']);  
+    // Promotions
+    Route::get('/promotions', [PromotionController::class, 'index']);
+    Route::get('/promotions/{id}', [PromotionController::class, 'show']);
+    Route::post('/promotions', [PromotionController::class, 'store']);
+    Route::patch('/promotions/{id}', [PromotionController::class, 'update']);
+    Route::delete('/promotions/{id}', [PromotionController::class, 'destroy']);
 });
 
 // ================== Rider Panel ==================
@@ -106,7 +107,6 @@ Route::prefix('riders')->middleware(['auth:api', 'role:rider'])->group(function 
     Route::get('/earnings', [RiderController::class, 'earnings']);
 });
 
-
 // ================== Customer Panel ==================
 Route::prefix('customer')->middleware(['auth:api','role:customer'])->group(function () {
     // Restaurants
@@ -116,9 +116,8 @@ Route::prefix('customer')->middleware(['auth:api','role:customer'])->group(funct
     // Orders
     Route::post('/orders', [CustomerController::class, 'placeOrder']);
     Route::get('/orders/{id}', [CustomerController::class, 'trackOrder']);
-    Route::get('orders', [CustomerController::class, 'orderHistory']);
-    Route::post('orders/{orderId}/reorder', [CustomerController::class, 'reorder']);
-
+    Route::get('/orders', [CustomerController::class, 'orderHistory']);
+    Route::post('/orders/{orderId}/reorder', [CustomerController::class, 'reorder']);
 
     // Reviews
     Route::post('/reviews', [CustomerController::class, 'review']);
@@ -135,21 +134,20 @@ Route::prefix('customer')->middleware(['auth:api','role:customer'])->group(funct
     Route::put('/addresses/{id}', [CustomerController::class, 'updateAddress']);
     Route::delete('/addresses/{id}', [CustomerController::class, 'deleteAddress']);
 
-    // Cart 
+    // Cart
     Route::get('/carts', [CartController::class, 'index']);
     Route::post('/carts', [CartController::class, 'store']);
     Route::get('/carts/{id}', [CartController::class, 'show']);
     Route::patch('/carts/{id}', [CartController::class, 'update']);
     Route::delete('/carts/{id}', [CartController::class, 'destroy']);
 
-    // Cart Items  
+    // Cart Items
     Route::get('/carts/{cartId}/items', [CartItemController::class, 'index']);
     Route::get('/cart-items/{id}', [CartItemController::class, 'show']);
     Route::post('/carts/{cartId}/items', [CartItemController::class, 'store']);
     Route::patch('/cart-items/{id}', [CartItemController::class, 'update']);
     Route::delete('/cart-items/{id}', [CartItemController::class, 'destroy']);
 });
-
 
 // ================== Error Logs ==================
 Route::get('/error-logs', [ErrorController::class, 'index']);
