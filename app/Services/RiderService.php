@@ -102,10 +102,10 @@ class RiderService implements RiderServiceInterface
 
     public function updateOrderStatus(int $orderId, string $status)
     {
-        if (!in_array($status, ['picked', 'delivered'])) {
+        $allowedStatuses = ['picked', 'on_the_way', 'delivered', 'cancelled'];
+        if (!in_array($status, $allowedStatuses, true)) {
             throw new \InvalidArgumentException('Invalid order status for rider.');
         }
-
         $order = Order::findOrFail($orderId);
         $order->update(['status' => $status]);
         return $order;

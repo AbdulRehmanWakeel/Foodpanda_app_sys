@@ -134,7 +134,7 @@ class RiderController extends Controller
     {
         return $this->handleRequest(function () use ($request, $id) {
             $data = $request->validate([
-                'status' => 'required|in:picked,delivered'
+                'status' => 'required|string|in:picked,on_the_way,delivered,cancelled'
             ]);
 
             $order = $this->riderService->updateOrderStatus($id, $data['status']);

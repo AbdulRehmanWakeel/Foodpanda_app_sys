@@ -16,7 +16,9 @@ return new class extends Migration
             $table->foreignId('restaurant_id')->constrained('restaurants')->onDelete('cascade');
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');  
             $table->decimal('total_price', 10, 2)->default(0.00);
-            $table->enum('status', ['pending','accepted','preparing','delivered','cancelled'])->default('pending');
+            $table->enum('status', [
+                'pending','accepted','preparing','ready','picked','on_the_way','delivered','cancelled'
+            ])->default('pending');
             $table->timestamps();
         });
     }
